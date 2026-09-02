@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment and IDE files
+.env
+.vscode/
+.idea/
+
+# Generated outputs
+data/output/*
+!data/output/.gitkeep
+
+# Input images and local model/cache files
+data/input/*
+!data/input/.gitkeep
+.models/
+.cache/
+insightface_cache/
+
+# Logs
+*.log
+logs/
