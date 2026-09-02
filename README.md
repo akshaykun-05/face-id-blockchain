@@ -76,6 +76,24 @@ Result saved    : data/output/phase1_result.json
 
 A first run may download the InsightFace `buffalo_l` model pack and cache it locally. This requires internet access and can take some time. Later runs reuse the local model cache.
 
+## Run Phase 2: genuine reverse-image search
+
+Phase 2 sends the local image to Google Lens through SerpApi using its encoded-image API mechanism. It parses the actual visual matches returned by the external search, marks likely social-media results by their returned URL domain, and saves the search evidence. Results are genuine external search results and are not hardcoded. Use your own image or an image from a consenting participant.
+
+Create a SerpApi account, obtain an API key, and add it to `.env`:
+
+```powershell
+SERPAPI_API_KEY=your_serpapi_api_key
+```
+
+Then run the search with:
+
+```powershell
+python run_phase2.py --image data/input/test.jpg
+```
+
+The command reports the number of returned matches and any actual social-media result URL and domain. It generates `data/output/phase2_result.json`, containing the real URLs and metadata returned by SerpApi. No result is invented when no social-media match is returned.
+
 ## Generated files
 
 After a successful run, `data/output/` contains:
