@@ -16,6 +16,9 @@ env/
 # Generated outputs
 data/output/*
 !data/output/.gitkeep
+data/output/verification_record.json
+data/output/verification_hash.json
+data/output/blockchain_proof.json
 
 # Input images and local model/cache files
 data/input/*

@@ -94,6 +94,35 @@ python run_phase2.py --image data/input/test.jpg
 
 The command reports the number of returned matches and any actual social-media result URL and domain. It generates `data/output/phase2_result.json`, containing the real URLs and metadata returned by SerpApi. No result is invented when no social-media match is returned.
 
+## Run Phase 3: blockchain verification
+
+Phase 3 creates a canonical verification record from the Phase 1 and Phase 2 JSON outputs, hashes that record with SHA-256, and anchors only the 32-byte hash in a transaction on the Polygon Amoy testnet. It does not store the face embedding, image, API key, private key, or raw search response on-chain. Use only your own image or an image from a consenting participant.
+
+Install the added dependency if your environment predates Phase 3:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Create a Polygon Amoy testnet wallet, obtain testnet POL for gas, and configure `.env` with placeholders replaced by your own values:
+
+```env
+BLOCKCHAIN_RPC_URL=https://your-polygon-amoy-rpc-url
+BLOCKCHAIN_PRIVATE_KEY=your_testnet_wallet_private_key
+BLOCKCHAIN_CHAIN_ID=80002
+```
+
+Run the complete sequence:
+
+```powershell
+python run_phase1.py --image data/input/test.jpg
+python run_phase2.py --image data/input/test.jpg
+python run_phase3.py
+python run_verify.py
+```
+
+Phase 3 writes `data/output/verification_record.json`, `data/output/verification_hash.json`, and `data/output/blockchain_proof.json`. A successful blockchain transaction is not assumed or claimed until you run Phase 3 with valid testnet configuration and funds. To demonstrate tampering, edit a value in `verification_record.json` and run `python run_verify.py`; the recalculated local hash will differ and verification will fail. Restore the record before future verification runs.
+
 ## Generated files
 
 After a successful run, `data/output/` contains:
