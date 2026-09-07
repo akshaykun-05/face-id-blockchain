@@ -88,7 +88,7 @@ class BlockchainClient:
                 "nonce": nonce,
                 "chainId": self.chain_id,
                 "data": self.web3.to_hex(hash_bytes),
-                "gas": 21_000,
+                "gas": 25_000,
                 "gasPrice": self.web3.eth.gas_price,
             }
             signed = self.account.sign_transaction(transaction)
