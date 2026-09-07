@@ -79,7 +79,7 @@ This saves the Phase 1 result and a face-embedding commitment without saving the
 python run_phase2.py --image data/input/YOUR_IMAGE.jpg
 ```
 
-This sends the image to Google Lens through SerpApi and saves the returned search evidence.
+This sends the image to Google Lens through SerpApi, processes the real returned results, identifies matching social-media results, and saves the selected result as search evidence.
 
 ### Phase 3
 
@@ -124,4 +124,4 @@ The expected current result is `17 passed`. The tests use mocked blockchain beha
 - `.env.example` contains placeholders only.
 - Phase 3 anchors only the SHA-256 verification hash; it does not put the raw face embedding on-chain.
 
-The normal GitHub Actions workflow runs tests only. A future manual workflow could use `SERPAPI_API_KEY`, `BLOCKCHAIN_RPC_URL`, `BLOCKCHAIN_PRIVATE_KEY`, and `BLOCKCHAIN_CHAIN_ID` as GitHub Actions secrets, but those secrets are not required by the test workflow.
+The normal GitHub Actions workflow runs tests only and does not submit real blockchain transactions.
