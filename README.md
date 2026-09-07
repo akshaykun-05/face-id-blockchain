@@ -1,141 +1,127 @@
 # Face ID + Blockchain Verification
 
-This hackathon project implements **Phase 1 only**: image-based face detection, face encoding, normalization, and a SHA-256 cryptographic commitment.
+This hackathon project runs a three-phase verification flow:
 
-> Phase 1 detects and encodes a face. Reverse-image search and blockchain verification are implemented in later phases.
+1. Phase 1 detects a face and creates a SHA-256 face-embedding commitment.
+2. Phase 2 performs a genuine Google Lens reverse-image search through SerpApi.
+3. Phase 3 creates a verification record, hashes it, and anchors that SHA-256 hash on the Polygon Amoy testnet.
 
-The project is intended for demonstrations using an image of yourself or another consenting participant. It does not attempt to identify a person. The raw face embedding stays in memory and is never written to JSON, logs, terminal output, or a blockchain. SHA-256 is an integrity/commitment representation, not encryption, and does not make biometric data anonymous or fully irreversible.
+Use an image of yourself or another consenting participant. The raw face embedding is never written to JSON, printed, or placed on-chain. A SHA-256 commitment is an integrity representation, not encryption or a guarantee of anonymity.
 
-## Project structure
+## Prerequisites
 
-```text
-face-id-blockchain/
-├── src/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── face_detector.py
-│   ├── face_encoder.py
-│   └── phase1.py
-├── data/input/.gitkeep
-├── data/output/.gitkeep
-├── tests/test_phase1.py
-├── .env.example
-├── .gitignore
-├── requirements.txt
-├── README.md
-└── run_phase1.py
-```
+- Python 3.11
+- pip
+- Git
+- A SerpApi account and API key for Google Lens
+- An EVM wallet for Polygon Amoy
+- A Polygon Amoy RPC endpoint
+- Testnet POL in the wallet for gas
 
-## Installation on Windows
+## Installation
 
-From the `face-id-blockchain` directory, create and activate a virtual environment:
+From the `face-id-blockchain` directory:
 
 ```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-If PowerShell blocks activation, run this once in PowerShell as your user:
+## Environment Setup
 
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
-## Configuration
-
-Copy `.env.example` to `.env`:
+Copy the template to a local `.env` file:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-The defaults are `buffalo_l`, CPU execution through `CPUExecutionProvider`, a `640 x 640` detection size, and a `0.50` confidence threshold. You can edit `.env` to change the model name, detection size, or threshold.
-
-## Run Phase 1
-
-Put a test image from a consenting participant at `data/input/test.jpg`, then run:
-
-```powershell
-python run_phase1.py --image data/input/test.jpg
-```
-
-The command reports four steps, the selected face confidence, embedding dimension, and the 64-character commitment. It never prints the raw embedding.
-
-Successful output is followed by:
-
-```text
-PHASE 1 COMPLETE
-Face confidence : 0.9873
-Embedding size  : 512
-Commitment      : <64 hexadecimal characters>
-Face crop saved : data/output/detected_face.jpg
-Result saved    : data/output/phase1_result.json
-```
-
-A first run may download the InsightFace `buffalo_l` model pack and cache it locally. This requires internet access and can take some time. Later runs reuse the local model cache.
-
-## Run Phase 2: genuine reverse-image search
-
-Phase 2 sends the local image to Google Lens through SerpApi using its encoded-image API mechanism. It parses the actual visual matches returned by the external search, marks likely social-media results by their returned URL domain, and saves the search evidence. Results are genuine external search results and are not hardcoded. Use your own image or an image from a consenting participant.
-
-Create a SerpApi account, obtain an API key, and add it to `.env`:
-
-```powershell
-SERPAPI_API_KEY=your_serpapi_api_key
-```
-
-Then run the search with:
-
-```powershell
-python run_phase2.py --image data/input/test.jpg
-```
-
-The command reports the number of returned matches and any actual social-media result URL and domain. It generates `data/output/phase2_result.json`, containing the real URLs and metadata returned by SerpApi. No result is invented when no social-media match is returned.
-
-## Run Phase 3: blockchain verification
-
-Phase 3 creates a canonical verification record from the Phase 1 and Phase 2 JSON outputs, hashes that record with SHA-256, and anchors only the 32-byte hash in a transaction on the Polygon Amoy testnet. It does not store the face embedding, image, API key, private key, or raw search response on-chain. Use only your own image or an image from a consenting participant.
-
-Install the added dependency if your environment predates Phase 3:
-
-```powershell
-pip install -r requirements.txt
-```
-
-Create a Polygon Amoy testnet wallet, obtain testnet POL for gas, and configure `.env` with placeholders replaced by your own values:
+Edit `.env` with your own local credentials:
 
 ```env
-BLOCKCHAIN_RPC_URL=https://your-polygon-amoy-rpc-url
-BLOCKCHAIN_PRIVATE_KEY=your_testnet_wallet_private_key
+SERPAPI_API_KEY=
+BLOCKCHAIN_RPC_URL=
+BLOCKCHAIN_PRIVATE_KEY=
 BLOCKCHAIN_CHAIN_ID=80002
 ```
 
-Run the complete sequence:
+Variables:
+
+- `SERPAPI_API_KEY`: Your SerpApi key for the Google Lens request.
+- `BLOCKCHAIN_RPC_URL`: Your Polygon Amoy JSON-RPC endpoint.
+- `BLOCKCHAIN_PRIVATE_KEY`: The private key for the funded testnet wallet used to submit the transaction.
+- `BLOCKCHAIN_CHAIN_ID`: Polygon Amoy, which is `80002`.
+
+`.env` is local only and must not be committed. `.env.example` contains placeholders only.
+
+## Run The Complete Project
+
+Place a consenting participant's image at `data/input/YOUR_IMAGE.jpg`, then run:
 
 ```powershell
-python run_phase1.py --image data/input/test.jpg
-python run_phase2.py --image data/input/test.jpg
+python run_phase1.py --image data/input/YOUR_IMAGE.jpg
+python run_phase2.py --image data/input/YOUR_IMAGE.jpg
 python run_phase3.py
 python run_verify.py
 ```
 
-Phase 3 writes `data/output/verification_record.json`, `data/output/verification_hash.json`, and `data/output/blockchain_proof.json`. A successful blockchain transaction is not assumed or claimed until you run Phase 3 with valid testnet configuration and funds. To demonstrate tampering, edit a value in `verification_record.json` and run `python run_verify.py`; the recalculated local hash will differ and verification will fail. Restore the record before future verification runs.
-
-## Generated files
-
-After a successful run, `data/output/` contains:
-
-- `detected_face.jpg`: the clamped crop of the highest-confidence detected face.
-- `phase1_result.json`: verification metadata and the SHA-256 commitment only.
-
-Generated outputs are ignored by Git.
-
-## Run tests
-
-The unit tests do not require a face image or an InsightFace model download:
+### Phase 1
 
 ```powershell
-python -m unittest discover -s tests -v
+python run_phase1.py --image data/input/YOUR_IMAGE.jpg
 ```
+
+This saves the Phase 1 result and a face-embedding commitment without saving the raw embedding.
+
+### Phase 2
+
+```powershell
+python run_phase2.py --image data/input/YOUR_IMAGE.jpg
+```
+
+This sends the image to Google Lens through SerpApi and saves the returned search evidence.
+
+### Phase 3
+
+```powershell
+python run_phase3.py
+```
+
+Phase 3 loads the Phase 1 and Phase 2 results, creates the verification record, calculates its SHA-256 hash, submits only that hash as transaction data to Polygon Amoy, waits for confirmation, and saves the blockchain proof.
+
+### Verification
+
+```powershell
+python run_verify.py
+```
+
+Verification recalculates the local record hash, retrieves the real blockchain transaction, extracts the anchored hash, and prints `VERIFIED` when they match.
+
+## Tamper Test
+
+1. Run `python run_verify.py` with the original verification record. It should produce `VERIFIED`.
+2. Temporarily change a value in `data/output/verification_record.json`.
+3. Run `python run_verify.py` again. It should produce `VERIFICATION FAILED`.
+4. Restore the original verification record afterward.
+
+Do not make a real blockchain transaction from the test suite.
+
+## Tests
+
+Run:
+
+```powershell
+python -m pytest
+```
+
+The expected current result is `17 passed`. The tests use mocked blockchain behavior where needed and do not submit real transactions.
+
+## Security / Secrets
+
+- The real `.env` is intentionally excluded from GitHub by `.gitignore`.
+- Private keys, API keys, and RPC credentials must never be committed.
+- Evaluators must provide their own credentials locally in `.env`.
+- `.env.example` contains placeholders only.
+- Phase 3 anchors only the SHA-256 verification hash; it does not put the raw face embedding on-chain.
+
+The normal GitHub Actions workflow runs tests only. A future manual workflow could use `SERPAPI_API_KEY`, `BLOCKCHAIN_RPC_URL`, `BLOCKCHAIN_PRIVATE_KEY`, and `BLOCKCHAIN_CHAIN_ID` as GitHub Actions secrets, but those secrets are not required by the test workflow.
